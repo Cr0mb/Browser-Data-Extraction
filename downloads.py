@@ -1,7 +1,3 @@
-#This script extracts the download history by querying their respective SQLite databases. 
-#It first identifies the correct database path based on the user's profile, and then it copies the database to a temporary file. 
-#Using SQLite queries, it extracts relevant download data, such as file paths, target locations, download start times, and URLs. 
-#The extracted download history is then saved in a JSON file. 
 import sqlite3
 import os
 import glob
@@ -43,12 +39,12 @@ def extract_download_history_from_browser(browser):
     db_path = get_browser_download_db(browser)
 
     if not db_path:
-        print(f"Error: No database found for {browser}")
+        print(f"\n[-] No database found for {browser}")
         return download_data
 
     temp_db_path = copy_db_to_temp(db_path)
     if not temp_db_path:
-        print(f"Error: Unable to copy the {browser} database")
+        print(f"[-] Unable to copy the {browser} database")
         return download_data
 
     try:
@@ -86,22 +82,29 @@ def extract_download_history_from_all_browsers():
     all_download_data = {}
 
     for browser in browsers:
-        print(f"Extracting download history from {browser}...")
+        print(f"[+] {browser} history...")
         download_data = extract_download_history_from_browser(browser)
         if download_data:
             all_download_data[browser] = download_data
         else:
-            print(f"No download history found for {browser}")
+            print(f"[-] {browser} no history\n")
 
     return all_download_data
 
 
 if __name__ == "__main__":
+    # Create "downloads" directory if it doesn't exist
+    download_dir = "downloads"
+    if not os.path.exists(download_dir):
+        os.makedirs(download_dir)
+    
+    # Extract and save data
     download_history = extract_download_history_from_all_browsers()
-
+    output_file = os.path.join(download_dir, "download_history.json")
+    
     if download_history:
-        with open("download_history.json", "w") as f:
+        with open(output_file, "w") as f:
             json.dump(download_history, f, indent=4)
-        print("Download history has been saved to download_history.json")
+        print(f"Download history has been saved to {output_file}")
     else:
         print("No download history data found.")
