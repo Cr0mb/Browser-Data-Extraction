@@ -15,10 +15,7 @@ def download_script(script_url):
         return None
 
 def extract_imports(script_content):
-    """
-    Extracts all the imports from the script content.
-    Returns a set of imports to avoid duplicates.
-    """
+
     tree = ast.parse(script_content)
     imports = set()
 
@@ -32,9 +29,7 @@ def extract_imports(script_content):
     return imports
 
 def install_missing_imports(imports):
-    """
-    Checks for missing imports and installs them.
-    """
+
     for imp in imports:
         try:
             importlib.import_module(imp)
@@ -64,7 +59,6 @@ def run_all_scripts():
     
     all_imports = set()
 
-    # First, download all scripts and extract their imports
     for script in scripts:
         script_content = download_script(script)
         if script_content:
@@ -73,15 +67,12 @@ def run_all_scripts():
         else:
             print(f"Failed to download script: {script}")
 
-    # Print total imports
     print("Total imports:")
     for imp in sorted(all_imports):
         print(imp)
 
-    # Install all missing imports before executing any scripts
     install_missing_imports(all_imports)
 
-    # After all imports are installed, execute the scripts
     for script in scripts:
         run_script(script)
     
