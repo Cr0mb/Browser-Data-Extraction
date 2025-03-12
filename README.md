@@ -1,4 +1,7 @@
-# Browser-Data-Extraction
+![image](https://github.com/user-attachments/assets/ae658e65-e94b-4863-beaf-bbd1ef4bb527)
+
+
+# Browser-Data-Extraction *BrowseX*
 This repository contains a set of Python scripts designed to extract browser data such as history, bookmarks, cookies, passwords, cache, and download history from popular browsers like Chrome, Brave, Edge, Firefox, and Opera. The scripts are cross-platform and work on Windows, macOS, and Linux.
 
 
