@@ -1,7 +1,3 @@
-#This script extracts browsing history from four popular web browsers across different platforms. 
-#It retrieves URLs, titles, visit counts, and timestamps from each browser's history database, formats the data, and saves it as CSV files. 
-#The script copies each browser's history file, queries the database, processes the results into a Pandas DataFrame, and then outputs individual CSV files for each browser's history, as well as a combined CSV file containing all the data. 
-#It is useful for aggregating browsing history across multiple browsers on a system.
 import os
 import shutil
 import sqlite3
@@ -109,6 +105,9 @@ def extract_history(browser):
         return df
 
 def extract_history_from_all_browsers():
+    if not os.path.exists('history'):
+        os.makedirs('history')
+
     browsers = ['chrome', 'brave', 'firefox', 'edge']
     all_data = []
     for browser in browsers:
@@ -116,11 +115,11 @@ def extract_history_from_all_browsers():
         df = extract_history(browser)
         if df is not None:
             all_data.append(df)
-            df.to_csv(f"{browser}_history.csv", index=False)
+            df.to_csv(os.path.join('history', f"{browser}_history.csv"), index=False)
     if all_data:
         combined_df = pd.concat(all_data, ignore_index=True)
-        combined_df.to_csv("combined_history.csv", index=False)
-        print(f"Combined history saved to combined_history.csv")
+        combined_df.to_csv(os.path.join('history', "combined_history.csv"), index=False)
+        print(f"Combined history saved to history/combined_history.csv")
 
 if __name__ == "__main__":
     extract_history_from_all_browsers()
