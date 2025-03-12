@@ -17,7 +17,7 @@ The repository includes three major components:
 
 ## Install
 ```
-pip install pandas psutil pycryptodome colorama pywin32
+pip install pycryptodome colorama pandas psutil pyfiglet requests pywin32
 ```
 
 
